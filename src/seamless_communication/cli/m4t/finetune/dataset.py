@@ -33,7 +33,7 @@ logger = logging.getLogger("dataset")
 # in paper "SeamlessM4T—Massively Multilingual & Multimodal Machine Translation" (Table 5)
 UNITY_TO_FLEURS_LANG_MAPPING = {
     "eng": "en_us",
-    "ita": "it_it",
+    "pes": "fa_ir",
     "afr": "af_za",
     "asm": "as_in",
     "bel": "be_by",
@@ -119,6 +119,7 @@ class UnitSpeechTokenizer(SpeechTokenizer):
 
 
 def download_fleurs_dataset(
+    hf_dataset_name: str,
     source_lang: str,
     target_lang: str,
     split: str,
@@ -131,6 +132,7 @@ def download_fleurs_dataset(
     )
     tokenizer = UnitSpeechTokenizer(device=device)
     dataset_iterator = Speech2SpeechFleursDatasetBuilder(
+        hf_dataset_name=hf_dataset_name,
         source_lang=UNITY_TO_FLEURS_LANG_MAPPING[source_lang],
         target_lang=UNITY_TO_FLEURS_LANG_MAPPING[target_lang],
         dataset_cache_dir=save_directory,
@@ -158,6 +160,12 @@ def init_parser() -> argparse.ArgumentParser:
             "extract units from target audio and save the dataset as a manifest "
             "consumable by `finetune.py`."
         )
+    )
+    parser.add_argument(
+        "--hf_dataset_name",
+        type=str,
+        required=True,
+        help="the HF dataset url",
     )
     parser.add_argument(
         "--source_lang",
@@ -188,7 +196,10 @@ def init_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = init_parser().parse_args()
+    if args.hf_dataset_name =='default':
+        args.hf_dataset_name='google/fleurs'    #default use this
     manifest_path = download_fleurs_dataset(
+        hf_dataset_name=args.hf_dataset_name,
         source_lang=args.source_lang,
         target_lang=args.target_lang,
         split=args.split,

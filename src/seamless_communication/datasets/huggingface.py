@@ -28,10 +28,11 @@ class SpeechTokenizer:
 class Speech2SpeechFleursDatasetBuilder:
     """Assembles speech2speech dataset from google/fleurs on HuggingFace"""
 
-    HF_FLEURS_DATASET_NAME = "google/fleurs"
+    HF_DATASET_NAME = ""
 
     def __init__(
         self,
+        hf_dataset_name: str,
         source_lang: str,
         target_lang: str,
         split: str = "test",
@@ -41,6 +42,7 @@ class Speech2SpeechFleursDatasetBuilder:
         dataset_cache_dir: Optional[str] = None,
         speech_tokenizer: Optional[SpeechTokenizer] = None,
     ):
+        self.HF_DATASET_NAME = hf_dataset_name
         self.source_lang = source_lang
         self.target_lang = target_lang
         self.split = split
@@ -91,7 +93,7 @@ class Speech2SpeechFleursDatasetBuilder:
 
     def iterate_lang_audio_samples(self, lang: str) -> Iterable[MultimodalSample]:
         ds = load_dataset(
-            self.HF_FLEURS_DATASET_NAME,
+            self.HF_DATASET_NAME,
             lang,
             split=self.split,
             cache_dir=self.dataset_cache_dir,
