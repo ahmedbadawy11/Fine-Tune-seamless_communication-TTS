@@ -379,8 +379,8 @@ class UnitYFinetune:
             torch.save(state_dict, self.params.save_model_path)
 
             torch.save({
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict()
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict()
                 # 'loss': LOSS,
             }, self.params.save_model_path.joinpath(Path('_my_')))
 
