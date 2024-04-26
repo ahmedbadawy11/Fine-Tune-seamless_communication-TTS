@@ -254,8 +254,8 @@ class UnitYDataLoader:
             units_lengths = torch.LongTensor(
                 [tokens.shape[0] - 1 for tokens in units_list]
             )
-
-        del units_list_raw, units_list
+            del units_list
+        del units_list_raw
         return MultimodalSeqsBatch(
             speech_to_text=SeqsBatch(
                 src_tokens=src_tokens,
