@@ -154,8 +154,8 @@ def main() -> None:
     assert model.target_vocab_info == text_tokenizer.vocab_info
     # (optional) delete unused params to reduce GPU memory consumption
     if (
-        finetune_params.finetune_mode == trainer.FinetuneMode.SPEECH_TO_TEXT
-        and model.t2u_model is not None
+            finetune_params.finetune_mode == trainer.FinetuneMode.SPEECH_TO_TEXT
+            and model.t2u_model is not None
     ):
         model.t2u_model = None
     if model.text_encoder is not None:
@@ -193,6 +193,9 @@ def main() -> None:
         train_data_loader=train_dataloader,
         eval_data_loader=eval_dataloader,
     )
+    del args, finetune_params, train_dataloader, eval_dataloader, text_tokenizer, unit_tokenizer, model
+    torch.cuda.empty_cache()
+
     finetune.run()
 
 
