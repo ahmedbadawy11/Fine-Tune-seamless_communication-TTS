@@ -71,10 +71,10 @@ class FinetuneParams:
     learning_rate: float = 1e-5
     """ Optimizer learining rate """
 
-    train_batch_size: int = 5
+    train_batch_size: int = 2
     """The batch size during train steps"""
 
-    eval_batch_size: int = 5
+    eval_batch_size: int = 2
     """The batch size during evaluation."""
 
     device: Device = torch.device("cuda")
@@ -296,11 +296,16 @@ class UnitYFinetune:
         if not dist_utils.is_dist_initialized():
             return wrapped_model
         find_unused = self.params.finetune_mode == FinetuneMode.TEXT_TO_SPEECH
-        return nn.parallel.DistributedDataParallel(
-            wrapped_model,
-            device_ids=[dist_utils.get_local_rank()],
-            find_unused_parameters=find_unused,
-        )
+        try:
+            return nn.parallel.DistributedDataParallel(
+                wrapped_model,
+                device_ids=[dist_utils.get_local_rank()],
+                find_unused_parameters=find_unused,
+            )
+        finally:
+            del wrapped_model
+            del find_unused
+            torch.cuda.empty_cache()
 
     def _update_eval_stats(self, eval_loss: float) -> None:
         self.is_best_state = (
@@ -338,6 +343,12 @@ class UnitYFinetune:
                 loss_hist.update(1, loss_val)
         eval_loss = loss_hist.reduce()
         self._update_eval_stats(eval_loss)
+        del loss_hist
+        del loss
+        del eval_loss
+        del loss_val
+        torch.cuda.empty_cache()
+
 
     def _train_step_log(self) -> None:
         """Log train stats"""
@@ -350,6 +361,8 @@ class UnitYFinetune:
                 f"train loss={avg_loss:.4f} "
                 f"last lr={self.lr_scheduler.get_last_lr()[0]:.2E}"
             )
+            del avg_loss
+        torch.cuda.empty_cache()
 
     def _train_step(self, batch: dataloader.MultimodalSeqsBatch) -> None:
         """Run one train step"""
@@ -368,21 +381,28 @@ class UnitYFinetune:
         assert batch.speech_to_text.src_tokens is not None
         self.train_loss_hist.update(1, loss.item())
         self._train_step_log()
+        del tokens
+        del units
+        del loss
+        del batch
+        torch.cuda.empty_cache()
+
 
     def _save_model(self) -> None:
         logger.info("Saving model")
         if dist_utils.is_main_process():
             state_dict = {
-                key.replace("module.model.", ""): value
+                # key.replace("module.model.", ""): value
+                key.replace("model.", ""): value
                 for key, value in self.model.state_dict().items()
             }
             torch.save(state_dict, self.params.save_model_path)
 
-            torch.save({
-                'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': self.optimizer.state_dict()
-                # 'loss': LOSS,
-            }, '_my_.pth')
+            # torch.save({
+            #     'model_state_dict': self.model.state_dict(),
+            #     'optimizer_state_dict': self.optimizer.state_dict()
+            #     # 'loss': LOSS,
+            # }, '_my_.pth')
 
         if dist_utils.is_dist_initialized():
             dist.barrier()
