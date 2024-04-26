@@ -322,6 +322,7 @@ class UnitYFinetune:
             f"patience_steps_left={self.patience_left}"
         )
 
+
     def _eval_model(self) -> None:
         """Calc avg loss on eval dataset and update evaluation stats"""
         if self.eval_data_loader is None:
