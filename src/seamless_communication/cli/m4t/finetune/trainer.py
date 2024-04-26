@@ -409,7 +409,7 @@ class UnitYFinetune:
 
             torch.save({
                 'model_state_dict': self.model.state_dict(),
-                'optimizer_state_dict': self.optimizer.state_dict()
+                # 'optimizer_state_dict': self.optimizer.state_dict()
                 # 'loss': LOSS,
             }, '_my_.pth')
 
