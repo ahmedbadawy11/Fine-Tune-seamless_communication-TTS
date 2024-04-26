@@ -45,7 +45,7 @@ class FinetuneParams:
 
     finetune_mode: FinetuneMode = FinetuneMode.TEXT_TO_SPEECH
     """Allows to freeze S2T or T2U part of the model"""
-    
+
     float_dtype: torch.dtype = torch.float16
     """Float Dtype"""
 
@@ -94,7 +94,7 @@ class UnitYFinetuneWrapper(nn.Module):
         self.device = device
 
     def forward(
-        self, batch: dataloader.MultimodalSeqsBatch
+            self, batch: dataloader.MultimodalSeqsBatch
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         dummy_context = contextmanager(lambda: iter([None]))()
         with torch.no_grad() if self.freeze_s2t else dummy_context:  # type:ignore
@@ -145,6 +145,10 @@ class UnitYFinetuneWrapper(nn.Module):
             )
             unit_logits = self.model.t2u_model.final_proj(unit_decoder_out)
 
+        # clean memory
+        del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out
+        torch.cuda.empty_cache()
+
         return (text_logits, unit_logits)
 
 
@@ -152,20 +156,20 @@ class CalcLoss:
     """Calculates negative log likelihood loss for S2T and T2U"""
 
     def __init__(
-        self,
-        label_smoothing: float,
-        s2t_vocab_info: VocabularyInfo,
-        t2u_vocab_info: Optional[VocabularyInfo],
+            self,
+            label_smoothing: float,
+            s2t_vocab_info: VocabularyInfo,
+            t2u_vocab_info: Optional[VocabularyInfo],
     ):
         self.label_smoothing = label_smoothing
         self.s2t_vocab_info = s2t_vocab_info
         self.t2u_vocab_info = t2u_vocab_info
 
     def __call__(
-        self,
-        batch: dataloader.MultimodalSeqsBatch,
-        text_logits: torch.Tensor,
-        unit_logits: Optional[torch.Tensor],
+            self,
+            batch: dataloader.MultimodalSeqsBatch,
+            text_logits: torch.Tensor,
+            unit_logits: Optional[torch.Tensor],
     ) -> torch.Tensor:
         assert batch.speech_to_text.target_lengths is not None
         prefix_skip_len = 1  # language tokens to skip
@@ -195,6 +199,11 @@ class CalcLoss:
             ignore_prefix_size=prefix_skip_len,
             label_smoothing=self.label_smoothing,
         )
+
+        # clean memory
+        del unit_logits
+        torch.cuda.empty_cache()
+
         return s2t_loss / s2t_numel + s2u_loss / s2u_numel
 
 
@@ -235,16 +244,19 @@ class LossCollector:
         dist.all_gather(all_vals, local_val)
         losses = torch.concat(all_vals, dim=0)
         reduced = torch.sum(losses, dim=0).reshape(2).cpu()
+        del all_vals
+        torch.cuda.empty_cache()
+
         return reduced[0].item(), reduced[1].item()
 
 
 class UnitYFinetune:
     def __init__(
-        self,
-        model: UnitYModel,
-        params: FinetuneParams,
-        train_data_loader: dataloader.UnitYDataLoader,
-        eval_data_loader: Optional[dataloader.UnitYDataLoader] = None,
+            self,
+            model: UnitYModel,
+            params: FinetuneParams,
+            train_data_loader: dataloader.UnitYDataLoader,
+            eval_data_loader: Optional[dataloader.UnitYDataLoader] = None,
     ):
         self.params = params
         self.calc_loss = CalcLoss(
@@ -303,13 +315,12 @@ class UnitYFinetune:
                 find_unused_parameters=find_unused,
             )
         finally:
-            del wrapped_model
-            del find_unused
+            del wrapped_model, find_unused
             torch.cuda.empty_cache()
 
     def _update_eval_stats(self, eval_loss: float) -> None:
         self.is_best_state = (
-            self.best_eval_loss is None or eval_loss < self.best_eval_loss
+                self.best_eval_loss is None or eval_loss < self.best_eval_loss
         )
         self.best_eval_loss = eval_loss if self.is_best_state else self.best_eval_loss
         self.patience_left = (
@@ -339,16 +350,17 @@ class UnitYFinetune:
                     loss_val = float("Inf")
                 else:
                     loss_val = loss.item()
-                del batch  # force memory release
+
                 loss_hist.update(1, loss_val)
+
+                del batch  # force memory release
+                torch.cuda.empty_cache()
+
         eval_loss = loss_hist.reduce()
         self._update_eval_stats(eval_loss)
-        del loss_hist
-        del loss
-        del eval_loss
-        del loss_val
-        torch.cuda.empty_cache()
 
+        del loss_hist, loss, eval_loss, loss_val
+        torch.cuda.empty_cache()
 
     def _train_step_log(self) -> None:
         """Log train stats"""
@@ -381,12 +393,9 @@ class UnitYFinetune:
         assert batch.speech_to_text.src_tokens is not None
         self.train_loss_hist.update(1, loss.item())
         self._train_step_log()
-        del tokens
-        del units
-        del loss
-        del batch
-        torch.cuda.empty_cache()
 
+        del tokens, units, loss, batch
+        torch.cuda.empty_cache()
 
     def _save_model(self) -> None:
         logger.info("Saving model")
@@ -398,14 +407,17 @@ class UnitYFinetune:
             }
             torch.save(state_dict, self.params.save_model_path)
 
-            # torch.save({
-            #     'model_state_dict': self.model.state_dict(),
-            #     'optimizer_state_dict': self.optimizer.state_dict()
-            #     # 'loss': LOSS,
-            # }, '_my_.pth')
+            torch.save({
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.optimizer.state_dict()
+                # 'loss': LOSS,
+            }, '_my_.pth')
 
         if dist_utils.is_dist_initialized():
             dist.barrier()
+
+        del state_dict
+        torch.cuda.empty_cache()
 
     def run(self) -> None:
         logger.info("Start finetuning")
@@ -428,3 +440,6 @@ class UnitYFinetune:
                         break
                 self.update_idx += 1
             self.epoch_idx += 1
+
+        del batch_itr, train_batch, no_improve_steps
+        torch.cuda.empty_cache()
