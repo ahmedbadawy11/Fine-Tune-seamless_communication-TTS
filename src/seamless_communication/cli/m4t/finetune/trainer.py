@@ -149,7 +149,7 @@ class UnitYFinetuneWrapper(nn.Module):
         del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out
         torch.cuda.empty_cache()
 
-        return text_logits, unit_logits
+        return (text_logits, unit_logits)
 
 
 class CalcLoss:
