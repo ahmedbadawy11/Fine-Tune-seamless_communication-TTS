@@ -68,7 +68,7 @@ class BatchingConfig:
     fbank_feats_pad_idx: int = 0
     """The pad index to use in fbanks batching."""
 
-    batch_size: int = 5
+    batch_size: int = 2
     """Fixed batch size to use"""
 
     max_audio_length_sec: float = 15.0
@@ -95,11 +95,11 @@ class UnitYDataLoader:
     SAMPLE_RATE = 16_000
 
     def __init__(
-        self,
-        text_tokenizer: NllbTokenizer,
-        unit_tokenizer: UnitTokenizer,
-        dataset_manifest_path: str,
-        batching_config: BatchingConfig,
+            self,
+            text_tokenizer: NllbTokenizer,
+            unit_tokenizer: UnitTokenizer,
+            dataset_manifest_path: str,
+            batching_config: BatchingConfig,
     ):
         self.text_tokenizer = text_tokenizer
         self.text_encoders_per_lang: Dict[str, TextTokenEncoder] = {}
@@ -130,6 +130,8 @@ class UnitYDataLoader:
             collate_fn=self._prepare_batch,
             worker_init_fn=worker_init_fn,
         )
+        del subset
+
         return data_loader
 
     def __iter__(self) -> Iterable[MultimodalSeqsBatch]:
@@ -138,7 +140,7 @@ class UnitYDataLoader:
     def _get_source_fbank(self, sample: LangPairSample) -> Tensor:
         wav, sample_rate = torchaudio.load(sample.source.audio_local_path)
         assert (
-            int(sample_rate) == self.SAMPLE_RATE
+                int(sample_rate) == self.SAMPLE_RATE
         ), f"sample != {self.SAMPLE_RATE}, please resample"
         assert len(wav.shape) in (1, 2)
         if len(wav.shape) == 1:
@@ -188,6 +190,7 @@ class UnitYDataLoader:
             padding = [0] * 2 * dims
             padding[-1] = padding_size - tensor.shape[0]
             padded_tensors.append(pad_tensor(tensor, padding, "constant", pad_value))
+        del padding_size
         return torch.stack([tensor for tensor in padded_tensors], dim=0)
 
     def _is_long_src_audio(self, sample: LangPairSample) -> bool:
@@ -231,6 +234,8 @@ class UnitYDataLoader:
         )
         # output units
         units_list_raw = [self._get_tokenized_units(sample) for sample in samples]
+        del samples, filtered_samples, src_tokens_list, with_nans
+
         if None in units_list_raw:
             prev_outputs_units = None
             target_units = None
@@ -249,6 +254,8 @@ class UnitYDataLoader:
             units_lengths = torch.LongTensor(
                 [tokens.shape[0] - 1 for tokens in units_list]
             )
+
+        del units_list_raw, units_list
         return MultimodalSeqsBatch(
             speech_to_text=SeqsBatch(
                 src_tokens=src_tokens,
