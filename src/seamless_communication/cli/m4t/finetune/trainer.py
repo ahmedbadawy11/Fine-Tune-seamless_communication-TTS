@@ -437,7 +437,6 @@ class UnitYFinetune:
                             "Early termination, as eval loss did not improve "
                             f"over last {no_improve_steps} updates"
                         )
-                        del no_improve_steps
                         break
                 self.update_idx += 1
             self.epoch_idx += 1
