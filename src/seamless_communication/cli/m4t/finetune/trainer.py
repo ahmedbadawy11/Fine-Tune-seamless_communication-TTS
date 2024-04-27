@@ -394,7 +394,7 @@ class UnitYFinetune:
         self.train_loss_hist.update(1, loss.item())
         self._train_step_log()
 
-        del tokens, units, loss, batch
+        del tokens, units, loss
         torch.cuda.empty_cache()
 
     def _save_model(self) -> None:
