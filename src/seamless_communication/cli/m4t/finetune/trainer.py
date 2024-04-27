@@ -90,7 +90,7 @@ class UnitYFinetuneWrapper(nn.Module):
         self.model: UnitYModel = model
         self.freeze_s2t: bool = mode == FinetuneMode.TEXT_TO_SPEECH
         self.freeze_t2u: bool = mode == FinetuneMode.SPEECH_TO_TEXT
-        logger.info(f"Freeze s2t: {self.freeze_s2t}, freeze t2u: {self.freeze_t2u}")
+        print(f"Freeze s2t: {self.freeze_s2t}, freeze t2u: {self.freeze_t2u}")
         self.device = device
 
     def forward(
@@ -326,7 +326,7 @@ class UnitYFinetune:
         self.patience_left = (
             self.params.patience if self.is_best_state else self.patience_left - 1
         )
-        logger.info(
+        print(
             f"Eval after {self.update_idx} updates: "
             f"loss={eval_loss:.4f} "
             f"best_loss={self.best_eval_loss:.4f} "
@@ -337,7 +337,7 @@ class UnitYFinetune:
         """Calc avg loss on eval dataset and update evaluation stats"""
         if self.eval_data_loader is None:
             return
-        logger.info("Run evaluation")
+        print("Run evaluation")
         loss_hist = LossCollector(device=self.params.device)
         self.model.eval()
         with torch.no_grad():
@@ -346,7 +346,7 @@ class UnitYFinetune:
                 with torch.autocast(device_type=self.params.device.type, dtype=self.params.float_dtype):
                     loss = self.calc_loss(batch, *self.model(batch))
                 if loss.isnan():
-                    logger.warning("Eval loss value is NaN, setting to inf")
+                    print("Warning - Eval loss value is NaN, setting to inf")
                     loss_val = float("Inf")
                 else:
                     loss_val = loss.item()
@@ -367,7 +367,7 @@ class UnitYFinetune:
         if (self.update_idx + 1) % self.params.log_steps == 0:
             avg_loss = self.train_loss_hist.reduce()
             self.train_loss_hist.reset()
-            logger.info(
+            print(
                 f"Epoch {str(self.epoch_idx + 1).zfill(3)} / "
                 f"update {str(self.update_idx + 1).zfill(5)}: "
                 f"train loss={avg_loss:.4f} "
@@ -384,7 +384,7 @@ class UnitYFinetune:
             tokens, units = self.model(batch)
         loss = self.calc_loss(batch, tokens, units)
         if loss.isnan().any().item():
-            logger.error(batch.speech_to_text)
+            print('Error : ', batch.speech_to_text)
             raise RuntimeError("Loss is Nan. Terminating.")
         self.grad_scaler.scale(loss).backward()
         self.grad_scaler.step(self.optimizer)
@@ -398,7 +398,7 @@ class UnitYFinetune:
         torch.cuda.empty_cache()
 
     def _save_model(self) -> None:
-        logger.info("Saving model")
+        print("Saving model")
         if dist_utils.is_main_process():
             state_dict = {
                 # key.replace("module.model.", ""): value
@@ -420,7 +420,7 @@ class UnitYFinetune:
         torch.cuda.empty_cache()
 
     def run(self) -> None:
-        logger.info("Start finetuning")
+        print("Start finetuning")
         self._reset_stats()
         self._eval_model()
         batch_itr = self.train_data_loader.get_dataloader()
@@ -433,7 +433,7 @@ class UnitYFinetune:
                         self._save_model()
                     elif not self.patience_left:
                         no_improve_steps = self.params.eval_steps * self.params.patience
-                        logger.info(
+                        print(
                             "Early termination, as eval loss did not improve "
                             f"over last {no_improve_steps} updates"
                         )

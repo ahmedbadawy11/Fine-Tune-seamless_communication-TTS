@@ -147,7 +147,7 @@ def main() -> None:
         eval_steps=args.eval_steps,
         log_steps=args.log_steps,
     )
-    logger.info(f"Finetune params: {finetune_params}")
+    print(f"Finetune params: {finetune_params}")
     model: UnitYModel = load_unity_model(
         args.model_name, device=torch.device("cpu"), dtype=torch.float32
     )
@@ -161,7 +161,7 @@ def main() -> None:
     if model.text_encoder is not None:
         model.text_encoder = None
     model = model.to(finetune_params.device)
-    logger.info(f"<{args.model_name}> {model}")
+    print(f"<{args.model_name}> {model}")
 
     train_dataloader = dataloader.UnitYDataLoader(
         text_tokenizer=text_tokenizer,
