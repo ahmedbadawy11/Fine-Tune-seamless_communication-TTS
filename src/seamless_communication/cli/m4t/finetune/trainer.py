@@ -354,7 +354,7 @@ class UnitYFinetune:
                 loss_hist.update(1, loss_val)
 
                 del batch  # force memory release
-                torch.cuda.empty_cache()
+            torch.cuda.empty_cache()
 
         eval_loss = loss_hist.reduce()
         self._update_eval_stats(eval_loss)
