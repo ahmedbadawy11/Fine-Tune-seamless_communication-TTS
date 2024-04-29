@@ -21,7 +21,7 @@ from seamless_communication.models.unity import (
     load_unity_unit_tokenizer,
 )
 from seamless_communication.models.unity.t2u_builder import (
-    create_unity_t2u_model, _base_t2u, _base_nar
+    create_unity_t2u_model, _base_t2u, _base_nar,_medium_t2u
 
 )
 
@@ -162,7 +162,7 @@ def main() -> None:
         model.t2u_model = None
     else:
         #### for TEXT_TO_SPEECH
-        model.t2u_model = create_unity_t2u_model(_base_nar(), args.device, finetune_params.float_dtype)
+        model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
         print(f"set done T2U model*************************")
     # if model.text_encoder is not None:
     #     model.text_encoder = None
