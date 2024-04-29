@@ -166,17 +166,16 @@ def main() -> None:
     if (finetune_params.finetune_mode == trainer.FinetuneMode.SPEECH_TO_TEXT
             and model.t2u_model is not None):
         model.t2u_model = None
-    else:
-        #### for TEXT_TO_SPEECH
-        # بررسی وجود pth مربوطه
-        if args.t2u_model_path == 'default':
-            model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
-            print(f"set default T2U model*************************")
 
-        else:
-            my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))
-            model.t2u_model.state_dict = my_trained['model_state_dict']
-            print(f"set pretrained T2U model@@@@@@@@@@@@@@@@@@@@@@@@")
+    #### for TEXT_TO_SPEECH
+    # بررسی وجود pth مربوطه
+    if args.t2u_model_path == 'default':
+        model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
+        print(f"set default T2U model*************************")
+    else:
+        my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))
+        model.t2u_model.state_dict = my_trained['model_state_dict']
+        print(f"set pretrained T2U model@@@@@@@@@@@@@@@@@@@@@@@@")
 
     # if model.text_encoder is not None:
     #     model.text_encoder = None
