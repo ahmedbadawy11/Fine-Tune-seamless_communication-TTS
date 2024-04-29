@@ -21,7 +21,7 @@ from seamless_communication.models.unity import (
     load_unity_unit_tokenizer,
 )
 from seamless_communication.models.unity.t2u_builder import (
-    create_unity_t2u_model, _base_t2u,_medium_t2u
+    create_unity_t2u_model, _base_t2u, _medium_t2u
 
 )
 
@@ -42,6 +42,12 @@ def init_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help="Path to manifest with train samples",
+    )
+    parser.add_argument(
+        "--t2u_model_path",
+        type=Path,
+        default="default",
+        help="path for pretrained T2U model",
     )
     parser.add_argument(
         "--eval_dataset",
@@ -162,7 +168,13 @@ def main() -> None:
         model.t2u_model = None
     else:
         #### for TEXT_TO_SPEECH
-        model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
+        # بررسی وجود pth مربوطه
+        if args.t2u_model_path == 'default':
+            model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
+        else:
+            my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))
+            model.t2u_model.state_dict = my_trained['model_state_dict']
+
         print(f"set done T2U model*************************")
     # if model.text_encoder is not None:
     #     model.text_encoder = None
@@ -200,7 +212,7 @@ def main() -> None:
         train_data_loader=train_dataloader,
         eval_data_loader=eval_dataloader,
     )
-    del args, finetune_params, train_dataloader, eval_dataloader, text_tokenizer, unit_tokenizer, model
+    del args, finetune_params, train_dataloader, eval_dataloader, text_tokenizer, unit_tokenizer, model, my_trained
     torch.cuda.empty_cache()
 
     finetune.run()
