@@ -169,13 +169,14 @@ def main() -> None:
 
     #### for TEXT_TO_SPEECH
     # بررسی وجود pth مربوطه
-    if args.t2u_model_path == 'default':
+    if str(args.t2u_model_path) == 'default':
         model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
         print(f"set default T2U model*************************")
     else:
         my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))
         model.t2u_model.state_dict = my_trained['model_state_dict']
         print(f"set pretrained T2U model@@@@@@@@@@@@@@@@@@@@@@@@")
+        del my_trained
 
     # if model.text_encoder is not None:
     #     model.text_encoder = None
@@ -213,7 +214,7 @@ def main() -> None:
         train_data_loader=train_dataloader,
         eval_data_loader=eval_dataloader,
     )
-    del args, finetune_params, train_dataloader, eval_dataloader, text_tokenizer, unit_tokenizer, model, my_trained
+    del args, finetune_params, train_dataloader, eval_dataloader, text_tokenizer, unit_tokenizer, model
     torch.cuda.empty_cache()
 
     finetune.run()
