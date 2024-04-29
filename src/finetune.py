@@ -21,7 +21,7 @@ from seamless_communication.models.unity import (
     load_unity_unit_tokenizer,
 )
 from seamless_communication.models.unity.t2u_builder import (
-    create_unity_t2u_model, _base_t2u, _base_nar,_medium_t2u
+    create_unity_t2u_model, _base_t2u,_medium_t2u
 
 )
 
