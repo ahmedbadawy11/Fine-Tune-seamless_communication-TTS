@@ -31,16 +31,16 @@ class Speech2SpeechFleursDatasetBuilder:
     HF_DATASET_NAME = ""
 
     def __init__(
-        self,
-        hf_dataset_name: str,
-        source_lang: str,
-        target_lang: str,
-        split: str = "test",
-        skip_source_audio: bool = True,
-        skip_target_audio: bool = True,
-        audio_dtype: torch.dtype = torch.float32,
-        dataset_cache_dir: Optional[str] = None,
-        speech_tokenizer: Optional[SpeechTokenizer] = None,
+            self,
+            hf_dataset_name: str,
+            source_lang: str,
+            target_lang: str,
+            split: str = "test",
+            skip_source_audio: bool = True,
+            skip_target_audio: bool = True,
+            audio_dtype: torch.dtype = torch.float32,
+            dataset_cache_dir: Optional[str] = None,
+            speech_tokenizer: Optional[SpeechTokenizer] = None,
     ):
         self.HF_DATASET_NAME = hf_dataset_name
         self.source_lang = source_lang
@@ -53,21 +53,19 @@ class Speech2SpeechFleursDatasetBuilder:
         self.speech_tokenizer = speech_tokenizer
 
     def _prepare_sample(
-        self,
-        sample_id: int,
-        lang: str,
-        text: str,
-        audio_local_path: Optional[str] = None,
-        waveform_npy: Optional[np.ndarray] = None,
-        sampling_rate: Optional[int] = None,
+            self,
+            sample_id: int,
+            lang: str,
+            text: str,
+            audio_local_path: Optional[str] = None,
+            waveform_npy: Optional[np.ndarray] = None,
+            sampling_rate: Optional[int] = None,
     ) -> MultimodalSample:
-        should_skip_audio = (
-            lang == self.target_lang
-            and self.skip_target_audio
-            or lang == self.source_lang
-            and self.skip_source_audio
-            or waveform_npy is None
-        )
+        # چون روی tts داریم train می کنیم همیشه میخواهیم unit ها را تولید کند پس شرط همیشه false است
+        # تا unit ها را بسازد و بعدا  unit های sorce lang را خالی می کنیم
+        # چون زبان مبدا و مقصد یکی است الان نمی توانیم تشخیص دهیم
+        should_skip_audio = self.skip_target_audio
+
         if not should_skip_audio:
             waveform = torch.from_numpy(waveform_npy).to(self.audio_dtype)
         else:
@@ -124,7 +122,7 @@ class Speech2SpeechFleursDatasetBuilder:
         logger.info(f"Loading {self.target_lang} samples")
         target_samples: Dict[int, MultimodalSample] = {}
         for idx, sample in enumerate(
-            self.iterate_lang_audio_samples(lang=self.target_lang)
+                self.iterate_lang_audio_samples(lang=self.target_lang)
         ):
             if idx and idx % 100 == 0:
                 logger.info(f"..loaded {idx} target samples")
@@ -132,7 +130,7 @@ class Speech2SpeechFleursDatasetBuilder:
 
         logger.info(f"Loading {self.source_lang} samples")
         for idx, sample in enumerate(
-            self.iterate_lang_audio_samples(lang=self.source_lang)
+                self.iterate_lang_audio_samples(lang=self.source_lang)
         ):
             if idx and idx % 100 == 0:
                 logger.info(f"..loaded {idx} source samples")

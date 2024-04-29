@@ -27,7 +27,6 @@ logging.basicConfig(
 
 logger = logging.getLogger("dataset")
 
-
 # Full list of FLEURS langcodes is available at https://huggingface.co/datasets/google/fleurs
 # Full list of M4T langcodes is available
 # in paper "SeamlessM4T—Massively Multilingual & Multimodal Machine Translation" (Table 5)
@@ -119,11 +118,11 @@ class UnitSpeechTokenizer(SpeechTokenizer):
 
 
 def download_fleurs_dataset(
-    hf_dataset_name: str,
-    source_lang: str,
-    target_lang: str,
-    split: str,
-    save_directory: str,
+        hf_dataset_name: str,
+        source_lang: str,
+        target_lang: str,
+        split: str,
+        save_directory: str,
 ) -> str:
     _check_lang_code_mapping(source_lang)
     _check_lang_code_mapping(target_lang)
@@ -148,6 +147,9 @@ def download_fleurs_dataset(
             sample.source.lang = source_lang
             sample.target.lang = target_lang
             sample.target.waveform = None  # already extracted units
+            sample.source.waveform = None  # already extracted units
+            sample.source.units = None  # چون روی tts کار می کنیم به unit های منبع نیاز نداریم
+            # print('res1111 :',dataclasses.asdict(sample))
             fp_out.write(json.dumps(dataclasses.asdict(sample)) + "\n")
     logger.info(f"Saved {idx} samples for split={split} to {manifest_path}")
     return manifest_path
@@ -196,8 +198,8 @@ def init_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = init_parser().parse_args()
-    if args.hf_dataset_name =='default':
-        args.hf_dataset_name='google/fleurs'    #default use this
+    if args.hf_dataset_name == 'default':
+        args.hf_dataset_name = 'google/fleurs'  # default use this
     manifest_path = download_fleurs_dataset(
         hf_dataset_name=args.hf_dataset_name,
         source_lang=args.source_lang,
