@@ -118,15 +118,15 @@ class UnitYFinetuneWrapper(nn.Module):
             assert self.model.final_proj is not None
             text_logits = self.model.final_proj(text_decoder_out)
         if self.freeze_t2u:
-            return (text_logits, None)
+            return text_logits, None
         assert self.model.t2u_model is not None
         assert batch.text_to_units.prev_output_tokens is not None
         dummy_context = contextmanager(lambda: iter([None]))()
+
         with torch.no_grad() if self.freeze_t2u else dummy_context:  # type:ignore
             if not isinstance(self.model.t2u_model, UnitYT2UModel):
-                raise NotImplementedError(
-                    "T2U finetuning implemented only for UnitYT2UModel"
-                )
+                raise NotImplementedError("T2U finetuning implemented only for UnitYT2UModel")
+
             (
                 unit_encoder_out,
                 unit_encoder_padding_mask,
@@ -405,13 +405,14 @@ class UnitYFinetune:
                 key.replace("model.", ""): value
                 for key, value in self.model.state_dict().items()
             }
-            torch.save(state_dict, self.params.save_model_path)
+            # torch.save(state_dict, self.params.save_model_path)
 
+            # ذخیره مدل را تغییر دادم تا بتوانم آن را به model که translator نام دارد تخصیص بدهم (این قسمت درحال تست است)
             torch.save({
                 'model_state_dict': self.model.state_dict(),
                 # 'optimizer_state_dict': self.optimizer.state_dict()
                 # 'loss': LOSS,
-            }, '_my_.pth')
+            }, '_my_trained.pth')
 
         if dist_utils.is_dist_initialized():
             dist.barrier()
