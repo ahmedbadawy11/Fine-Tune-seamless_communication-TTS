@@ -412,7 +412,7 @@ class UnitYFinetune:
                 'model_state_dict': self.model.state_dict(),
                 # 'optimizer_state_dict': self.optimizer.state_dict()
                 # 'loss': LOSS,
-            }, '_my_trained.pth')
+            }, self.params.save_model_path)
 
         if dist_utils.is_dist_initialized():
             dist.barrier()
