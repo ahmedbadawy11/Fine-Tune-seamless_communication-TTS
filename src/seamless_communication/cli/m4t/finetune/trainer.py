@@ -404,7 +404,7 @@ class UnitYFinetune:
                 key.replace("module.model.", ""): value
                 for key, value in self.model.state_dict().items()
             }
-            # torch.save(state_dict, self.params.save_model_path)
+            torch.save(state_dict, self.params.save_model_path)
 
             # ذخیره مدل را تغییر دادم تا بتوانم آن را به model که translator نام دارد تخصیص بدهم (این قسمت درحال تست است)
             # torch.save({
