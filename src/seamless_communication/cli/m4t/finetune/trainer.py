@@ -401,18 +401,17 @@ class UnitYFinetune:
         print("Saving model")
         if dist_utils.is_main_process():
             state_dict = {
-                # key.replace("module.model.", ""): value
-                key.replace("model.", ""): value
+                key.replace("module.model.", ""): value
                 for key, value in self.model.state_dict().items()
             }
             # torch.save(state_dict, self.params.save_model_path)
 
             # ذخیره مدل را تغییر دادم تا بتوانم آن را به model که translator نام دارد تخصیص بدهم (این قسمت درحال تست است)
-            torch.save({
-                'model_state_dict': self.model.state_dict(),
-                # 'optimizer_state_dict': self.optimizer.state_dict()
-                # 'loss': LOSS,
-            }, self.params.save_model_path)
+            # torch.save({
+            #     'model_state_dict': self.model.state_dict(),
+            #     # 'optimizer_state_dict': self.optimizer.state_dict()
+            #     # 'loss': LOSS,
+            # }, self.params.save_model_path)
 
         if dist_utils.is_dist_initialized():
             dist.barrier()
