@@ -21,7 +21,7 @@ from seamless_communication.models.unity import (
     load_unity_unit_tokenizer,
 )
 from seamless_communication.models.unity.t2u_builder import (
-    create_unity_t2u_model, _base_t2u, _medium_t2u
+    create_unity_t2u_model, _base_nar, _medium_t2u
 
 )
 
@@ -170,7 +170,7 @@ def main() -> None:
     #### for TEXT_TO_SPEECH
     # بررسی وجود pth مربوطه
     if str(args.t2u_model_path) == 'default':
-        model.t2u_model = create_unity_t2u_model(_medium_t2u(), args.device, finetune_params.float_dtype)
+        # model.t2u_model = create_unity_t2u_model(_base_nar(), args.device, finetune_params.float_dtype)
         print(f"set default T2U model*************************")
     else:
         my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))

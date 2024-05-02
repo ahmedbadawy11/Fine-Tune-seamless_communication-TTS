@@ -27,6 +27,7 @@ from seamless_communication.cli.m4t.finetune import dataloader, dist_utils
 from seamless_communication.models.unity import (
     UnitYModel,
     UnitYT2UModel,
+    UnitYNART2UModel
 )
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,7 @@ class UnitYFinetuneWrapper(nn.Module):
         dummy_context = contextmanager(lambda: iter([None]))()
 
         with torch.no_grad() if self.freeze_t2u else dummy_context:  # type:ignore
-            if not isinstance(self.model.t2u_model, UnitYT2UModel):
+            if not isinstance(self.model.t2u_model, UnitYNART2UModel):
                 raise NotImplementedError("T2U finetuning implemented only for UnitYT2UModel")
 
             (
