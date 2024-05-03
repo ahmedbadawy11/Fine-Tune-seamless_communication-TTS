@@ -12,6 +12,7 @@ from enum import Enum
 from tqdm import tqdm
 from pathlib import Path
 from typing import Optional, Tuple
+from torch import Tensor
 
 import torch
 import torch.distributed as dist
@@ -125,7 +126,7 @@ class UnitYFinetuneWrapper(nn.Module):
         dummy_context = contextmanager(lambda: iter([None]))()
 
         with torch.no_grad() if self.freeze_t2u else dummy_context:  # type:ignore
-            if not isinstance(self.model.t2u_model, UnitYNART2UModel):
+            if not isinstance(self.model.t2u_model, UnitYT2UModel):
                 raise NotImplementedError("T2U finetuning implemented only for UnitYT2UModel")
 
             (

@@ -170,7 +170,8 @@ def main() -> None:
     #### for TEXT_TO_SPEECH
     # بررسی وجود pth مربوطه
     if str(args.t2u_model_path) == 'default':
-        # model.t2u_model = create_unity_t2u_model(_base_nar(), args.device, finetune_params.float_dtype)
+        model.t2u_model = create_unity_t2u_model(_base_nar(), args.device, finetune_params.float_dtype)
+        model.t2u_model.encoder
         print(f"set default T2U model*************************")
     else:
         my_trained = torch.load(f'{args.t2u_model_path}', map_location=torch.device('cpu'))
