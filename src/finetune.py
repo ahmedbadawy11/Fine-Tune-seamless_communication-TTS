@@ -167,6 +167,7 @@ def main() -> None:
             and model.t2u_model is not None):
         model.t2u_model = None
 
+    model.input_modality = 'text'
     #### for TEXT_TO_SPEECH
     # بررسی وجود pth مربوطه
     # if str(args.t2u_model_path) == 'default':
