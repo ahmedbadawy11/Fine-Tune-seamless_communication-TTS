@@ -163,9 +163,9 @@ def main() -> None:
     )
     assert model.target_vocab_info == text_tokenizer.vocab_info
     # (optional) delete unused params to reduce GPU memory consumption
-    if (finetune_params.finetune_mode == trainer.FinetuneMode.SPEECH_TO_TEXT
-            and model.t2u_model is not None):
-        model.t2u_model = None
+    # if (finetune_params.finetune_mode == trainer.FinetuneMode.SPEECH_TO_TEXT
+    #         and model.t2u_model is not None):
+    #     model.t2u_model = None
 
     #### for TEXT_TO_SPEECH
     # بررسی وجود pth مربوطه
