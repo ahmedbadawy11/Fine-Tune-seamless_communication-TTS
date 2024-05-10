@@ -125,33 +125,50 @@ class UnitYFinetuneWrapper(nn.Module):
         assert batch.text_to_units.prev_output_tokens is not None
         dummy_context = contextmanager(lambda: iter([None]))()
 
-        with torch.no_grad() if self.freeze_t2u else dummy_context:  # type:ignore
-            if not isinstance(self.model.t2u_model, UnitYT2UModel):
-                raise NotImplementedError("T2U finetuning implemented only for UnitYT2UModel")
+        with (torch.no_grad() if self.freeze_t2u else dummy_context):  # type:ignore
+            if isinstance(self.model.t2u_model, UnitYT2UModel):
+                (unit_encoder_out, unit_encoder_padding_mask) = self.model.t2u_model.encode(
+                    seqs=text_decoder_out,
+                    padding_mask=text_decoder_padding_mask,
+                )
 
-            (
-                unit_encoder_out,
-                unit_encoder_padding_mask,
-            ) = self.model.t2u_model.encode(
-                seqs=text_decoder_out,
-                padding_mask=text_decoder_padding_mask,
-            )
-            seqs = batch.text_to_units.prev_output_tokens.to(self.device)
-            assert batch.text_to_units.target_lengths is not None
-            seq_lens = batch.text_to_units.target_lengths.to(self.device)
-            unit_decoder_out, _ = self.model.t2u_model.decode(
-                seqs=seqs,
-                padding_mask=PaddingMask(seq_lens, seqs.size(1)),
-                encoder_output=unit_encoder_out,
-                encoder_padding_mask=unit_encoder_padding_mask,
-            )
-            unit_logits = self.model.t2u_model.final_proj(unit_decoder_out)
+                seqs = batch.text_to_units.prev_output_tokens.to(self.device)
+                assert batch.text_to_units.target_lengths is not None
+                seq_lens = batch.text_to_units.target_lengths.to(self.device)
+                unit_decoder_out, _ = self.model.t2u_model.decode(
+                    seqs=seqs,
+                    padding_mask=PaddingMask(seq_lens, seqs.size(1)),
+                    encoder_output=unit_encoder_out,
+                    encoder_padding_mask=unit_encoder_padding_mask,
+                )
+                unit_logits = self.model.t2u_model.final_proj(unit_decoder_out)
 
-        # clean memory
-        del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out
-        torch.cuda.empty_cache()
+                return (text_logits, unit_logits)
 
-        return (text_logits, unit_logits)
+            if isinstance(self.model.t2u_model, UnitYNART2UModel):  ################## new FT
+                unit_decoder_out, decoder_padding_mask, durations = self.model.t2u_model.forward(
+                    text_decoder_output=text_decoder_out,
+                    text_decoder_padding_mask=text_decoder_padding_mask,
+                    text_seqs=seqs,
+                )
+                print('unit_decoder_out.logits : ', unit_decoder_out.logits)
+                print('unit_decoder_out.logits.shape : ', unit_decoder_out.logits.shape)
+                print('text_decoder_out.shape : ', text_decoder_out.shape)
+                print('seqs.shape : ', seqs.shape)
+                print('model.t2u_model.model_dim : ', self.model.t2u_model.model_dim)
+                print('model.t2u_model.prosody_proj : ', self.model.t2u_model.prosody_proj)
+                print('model.t2u_model.target_vocab_info : ', self.model.t2u_model.target_vocab_info)
+                
+
+                unit_logits = self.model.t2u_model.final_proj(unit_decoder_out.logits)
+                print('aaaaaaaaaaaaaaaa')
+            else:
+                raise NotImplementedError("T2U finetuning not implemented ")
+
+            # clean memory
+            del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out, decoder_padding_mask, durations
+            torch.cuda.empty_cache()
+            return (text_logits, unit_logits)
 
 
 class CalcLoss:
@@ -347,6 +364,7 @@ class UnitYFinetune:
                 assert batch.speech_to_text.src_tokens is not None
                 with torch.autocast(device_type=self.params.device.type, dtype=self.params.float_dtype):
                     loss = self.calc_loss(batch, *self.model(batch))
+                    print('after calculating loss............', loss.item())
                 if loss.isnan():
                     print("Warning - Eval loss value is NaN, setting to inf")
                     loss_val = float("Inf")
