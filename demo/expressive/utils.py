@@ -71,7 +71,7 @@ LANGUAGE_CODE_TO_NAME = {
     "ory": "Odia",
     "pan": "Punjabi",
     "pbt": "Southern Pashto",
-    "pes": "Western Persian",
+    "farsi": "Western Persian",
     "pol": "Polish",
     "por": "Portuguese",
     "ron": "Romanian",
