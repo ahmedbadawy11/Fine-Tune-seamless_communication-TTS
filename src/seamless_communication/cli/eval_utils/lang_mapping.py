@@ -20,7 +20,7 @@ LANG2_LANG3 = {
     "el": "ell",
     "es": "spa",
     "et": "est",
-    "fa": "farsi",
+    "fa": "pes",
     "fi": "fin",
     "fr": "fra",
     "ga": "gle",

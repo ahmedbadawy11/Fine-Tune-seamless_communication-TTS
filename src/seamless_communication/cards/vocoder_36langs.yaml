@@ -30,7 +30,7 @@ model_config: {
             "kor": 16,
             "mlt": 17,
             "nld": 18,
-            "farsi": 19,
+            "pes": 19,
             "pol": 20,
             "por": 21,
             "ron": 22,
@@ -123,7 +123,7 @@ model_config: {
             "nld": [
                 35
             ],
-            "farsi": [
+            "pes": [
                 36
             ],
             "pol": [

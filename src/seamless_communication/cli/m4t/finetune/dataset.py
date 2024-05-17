@@ -32,7 +32,7 @@ logger = logging.getLogger("dataset")
 # in paper "SeamlessM4T—Massively Multilingual & Multimodal Machine Translation" (Table 5)
 UNITY_TO_FLEURS_LANG_MAPPING = {
     "eng": "en_us",
-    "farsi": "fa_ir",
+    "pes": "fa_ir",
     "afr": "af_za",
     "asm": "as_in",
     "bel": "be_by",
