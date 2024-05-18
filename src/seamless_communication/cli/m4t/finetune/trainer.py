@@ -155,12 +155,9 @@ class UnitYFinetuneWrapper(nn.Module):
                 print('unit_decoder_out.logits.shape : ', unit_decoder_out.logits.shape)
                 print('text_decoder_out.shape : ', text_decoder_out.shape)
                 print('seqs.shape : ', seqs.shape)
-                print('model.t2u_model.model_dim : ', self.model.t2u_model.model_dim)
-                print('model.t2u_model.prosody_proj : ', self.model.t2u_model.prosody_proj)
-                print('model.t2u_model.target_vocab_info : ', self.model.t2u_model.target_vocab_info)
-                
 
-                unit_logits = self.model.t2u_model.final_proj(unit_decoder_out.logits)
+                # self.model.t2u_model.final_proj = unit_decoder_out.logits
+                unit_logits = unit_decoder_out.logits
                 print('aaaaaaaaaaaaaaaa')
             else:
                 raise NotImplementedError("T2U finetuning not implemented ")
@@ -220,7 +217,7 @@ class CalcLoss:
         )
 
         # clean memory
-        del unit_logits
+        del unit_logits, batch
         torch.cuda.empty_cache()
 
         return s2t_loss / s2t_numel + s2u_loss / s2u_numel
