@@ -280,9 +280,9 @@ class Translator(nn.Module):
                 if audio.dim() == 1:
                     audio = audio.unsqueeze(1)
                 elif audio.dim() == 2 and audio.size(0) < audio.size(1):
-                    logger.warning(
-                        "Transposing audio tensor from (bsz, seq_len) -> (seq_len, bsz)."
-                    )
+                    # logger.warning(
+                    #     "Transposing audio tensor from (bsz, seq_len) -> (seq_len, bsz)."
+                    # )
                     audio = audio.transpose(0, 1)
 
                 decoded_audio = {
