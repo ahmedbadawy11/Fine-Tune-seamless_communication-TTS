@@ -149,6 +149,8 @@ def download_fleurs_dataset(
             sample.target.waveform = None  # already extracted units
             sample.source.waveform = None  # already extracted units
             sample.source.units = None  # چون روی tts کار می کنیم به unit های منبع نیاز نداریم
+            if len(sample.target.units) > 2048:
+                continue
             # print('res1111 :',dataclasses.asdict(sample))
             fp_out.write(json.dumps(dataclasses.asdict(sample)) + "\n")
     logger.info(f"Saved {idx} samples for split={split} to {manifest_path}")
