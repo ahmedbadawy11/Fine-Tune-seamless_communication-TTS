@@ -124,16 +124,16 @@ def download_fleurs_dataset(
         split: str,
         save_directory: str,
 ) -> str:
-    _check_lang_code_mapping(source_lang)
-    _check_lang_code_mapping(target_lang)
+    # _check_lang_code_mapping(source_lang)
+    # _check_lang_code_mapping(target_lang)
     device = (
         torch.device("cuda:0") if torch.cuda.device_count() > 0 else torch.device("cpu")
     )
     tokenizer = UnitSpeechTokenizer(device=device)
     dataset_iterator = Speech2SpeechFleursDatasetBuilder(
         hf_dataset_name=hf_dataset_name,
-        source_lang=UNITY_TO_FLEURS_LANG_MAPPING[source_lang],
-        target_lang=UNITY_TO_FLEURS_LANG_MAPPING[target_lang],
+        source_lang=source_lang,
+        target_lang=target_lang,
         dataset_cache_dir=save_directory,
         speech_tokenizer=tokenizer,
         skip_source_audio=True,  # don't extract units from source audio
@@ -141,7 +141,7 @@ def download_fleurs_dataset(
         split=split,
     )
     manifest_path: str = os.path.join(save_directory, f"{split}_manifest.json")
-    with open(manifest_path, "w") as fp_out:
+    with open(manifest_path, "w" ,encoding="utf-8") as fp_out:
         for idx, sample in enumerate(dataset_iterator.__iter__(), start=1):
             # correction as FleursDatasetBuilder return fleurs lang codes
             sample.source.lang = source_lang
@@ -152,7 +152,7 @@ def download_fleurs_dataset(
             if len(sample.target.units) > 2048:
                 continue
             # print('res1111 :',dataclasses.asdict(sample))
-            fp_out.write(json.dumps(dataclasses.asdict(sample)) + "\n")
+            fp_out.write(json.dumps(dataclasses.asdict(sample), ensure_ascii=False) + "\n")
     logger.info(f"Saved {idx} samples for split={split} to {manifest_path}")
     return manifest_path
 

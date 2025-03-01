@@ -98,16 +98,16 @@ class Speech2SpeechFleursDatasetBuilder:
             streaming=False,
             trust_remote_code=True,
         )
-        for item in ds:
+        for i, item in enumerate(ds):
             audio_path = os.path.join(
-                os.path.dirname(item["path"]), item["audio"]["path"]
+                os.path.dirname("/content/drive/MyDrive/100H_data/Processed_Audios/"), item["audio"]["path"]
             )
             (sample_id, audio_local_path, waveform, sampling_rate, text) = (
-                item["id"],
+                i,
                 audio_path,
                 item["audio"]["array"],
                 item["audio"]["sampling_rate"],
-                item["transcription"],
+                item["text"],
             )
             yield self._prepare_sample(
                 sample_id=sample_id,
