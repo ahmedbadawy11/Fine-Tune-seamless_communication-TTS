@@ -145,26 +145,51 @@ class UnitYFinetuneWrapper(nn.Module):
 
                 return (text_logits, unit_logits)
 
-            if isinstance(self.model.t2u_model, UnitYNART2UModel):  ################## new FT
-                unit_decoder_out, decoder_padding_mask, durations = self.model.t2u_model.forward(
-                    text_decoder_output=text_decoder_out,
-                    text_decoder_padding_mask=text_decoder_padding_mask,
-                    text_seqs=seqs,
-                )
-                print('unit_decoder_out.logits : ', unit_decoder_out.logits)
-                print('unit_decoder_out.logits.shape : ', unit_decoder_out.logits.shape)
-                print('text_decoder_out.shape : ', text_decoder_out.shape)
-                print('seqs.shape : ', seqs.shape)
+            # if isinstance(self.model.t2u_model, UnitYNART2UModel):  ################## new FT
+            #     unit_decoder_out, decoder_padding_mask, durations = self.model.t2u_model.forward(
+            #         text_decoder_output=text_decoder_out,
+            #         text_decoder_padding_mask=text_decoder_padding_mask,
+            #         text_seqs=seqs,
+            #     )
+            #     print('unit_decoder_out.logits : ', unit_decoder_out.logits)
+            #     print('unit_decoder_out.logits.shape : ', unit_decoder_out.logits.shape)
+            #     print('text_decoder_out.shape : ', text_decoder_out.shape)
+            #     print('seqs.shape : ', seqs.shape)
 
-                # self.model.t2u_model.final_proj = unit_decoder_out.logits
-                unit_logits = unit_decoder_out.logits
-                print('aaaaaaaaaaaaaaaa')
+            #     # self.model.t2u_model.final_proj = unit_decoder_out.logits
+            #     unit_logits = unit_decoder_out.logits
+            #     print('aaaaaaaaaaaaaaaa')
+            if isinstance(self.model.t2u_model, UnitYNART2UModel):
+                # Encode the text decoder output
+                encoder_output, encoder_padding_mask = self.model.t2u_model.encode(
+                    text_decoder_output=text_decoder_out,
+                    text_decoder_padding_mask=text_decoder_padding_mask
+                )
+
+                # Optional: Apply prosody conditioning if available
+                if self.model.t2u_model.prosody_proj is not None and film_cond_emb is not None:
+                    encoder_output = encoder_output + self.model.t2u_model.prosody_proj(film_cond_emb)
+
+                # Decode into unit sequences
+                unit_decoder_out, unit_padding_mask, durations = self.model.t2u_model.decode(
+                    encoder_output=encoder_output,
+                    encoder_padding_mask=encoder_padding_mask,
+                    text_seqs=batch.text_to_units.prev_output_tokens.to(self.device),
+                    duration_factor=1.0,  # Adjust if necessary
+                    film_cond_emb=film_cond_emb
+                )
+
+                # Project decoder output into logits
+                unit_logits = self.model.t2u_model.project(unit_decoder_out)
+
+                return text_logits, unit_logits
+
             else:
                 raise NotImplementedError("T2U finetuning not implemented ")
 
-            # clean memory
-            del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out, decoder_padding_mask, durations
-            torch.cuda.empty_cache()
+            # # clean memory
+            # del dummy_context, seqs, seq_lens, text_decoder_out, text_decoder_padding_mask, unit_decoder_out, decoder_padding_mask, durations
+            # torch.cuda.empty_cache()
             return (text_logits, unit_logits)
 
 
